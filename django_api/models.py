@@ -12,10 +12,13 @@ class Post(models.Model):
     class Meta:
         ordering = ['-created_on']
 
+    def __str__(self):
+        return f'{self.title}'
+
 
 class Comment(models.Model):
     comment_id = models.AutoField(primary_key=True)
-    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     body = models.CharField(max_length=1000)
     created_on = models.DateTimeField(auto_now_add=True)
@@ -23,6 +26,8 @@ class Comment(models.Model):
     class Meta:
         ordering = ['-created_on']
 
+    def __str__(self):
+        return f"User: {self.user.username} | Comment body: {self.body}"
 
 class PostLike(models.Model):
     post_like_id = models.AutoField(primary_key=True)
