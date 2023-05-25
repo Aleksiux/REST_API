@@ -2,9 +2,10 @@ from django.shortcuts import render
 from rest_framework import generics, permissions
 from .models import Post, Comment, PostLike, CommentLike
 from rest_framework.exceptions import ValidationError
-from .serializers import PostSerializer, CommentSerializer, PostLikeSerializer
+from .serializers import PostSerializer, CommentSerializer, PostLikeSerializer, UserSerializer
 from rest_framework import generics, permissions, mixins, status
 from rest_framework.response import Response
+from django.contrib.auth.admin import User
 
 
 # class PostList(generics.ListAPIView):
@@ -75,7 +76,7 @@ class CommentDetail(generics.RetrieveUpdateDestroyAPIView):
             raise ValidationError('You can\'t delete another user comments!')
 
 
-class PostLikeCreate(generics.ListCreateAPIView, mixins.DestroyModelMixin):
+class PostLikeCreate(generics.ListCreateAPIView):
     serializer_class = PostLikeSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     """
@@ -90,7 +91,7 @@ class PostLikeCreate(generics.ListCreateAPIView, mixins.DestroyModelMixin):
 
     def perform_create(self, serializer):
         if self.get_queryset().exists():
-            raise ValidationError('You already likes this comment!')
+            raise ValidationError('You already liked this comment!')
         post = Post.objects.get(pk=self.kwargs['pk'])
         serializer.save(user=self.request.user, post=post)
 
@@ -100,3 +101,17 @@ class PostLikeCreate(generics.ListCreateAPIView, mixins.DestroyModelMixin):
             return Response(status=status.HTTP_204_NO_CONTENT)
         else:
             raise ValidationError('You did not left any like in this post!')
+
+
+class UserCreate(generics.CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = (permissions.AllowAny,)
+
+    def delete(self, request, *args, **kwargs):
+        user = User.objects.filter(pk=self.request.user.pk)
+        if user.exists():
+            user.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            raise ValidationError('User doesn\'t exist.')
